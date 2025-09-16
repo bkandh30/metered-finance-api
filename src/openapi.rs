@@ -1,4 +1,7 @@
-use axum::Router;
+use axum::{
+    Router,
+    http::StatusCode,
+};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 

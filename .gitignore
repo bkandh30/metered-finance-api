@@ -1,1 +1,9 @@
 /target
+*.pdb
+**/*.rs.bk
+
+.env
+
+*.log
+
+coverage/

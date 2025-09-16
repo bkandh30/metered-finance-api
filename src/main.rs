@@ -19,7 +19,11 @@ async fn main() -> Result<()> {
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| "info,axum=info,tower_http=info".into()),
         )
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer()
+            .with_target(true)
+            .with_thread_ids(true)
+            .with_line_number(true)
+        )
         .init();
 
     // Load environment variables
@@ -36,6 +40,8 @@ async fn main() -> Result<()> {
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
     info!("Server listening on {}", addr);
+    info!("Swagger UI available at http://{}/docs", addr);
+    info!("Metrics available at http://{}/metrics", addr);
 
     axum::serve(listener, app).await?;
 

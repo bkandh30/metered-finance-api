@@ -29,6 +29,15 @@ async fn main() -> Result<()> {
 
     // Load configuration
     let config = config::load_config()?;
+    
+    let port = config.port;
+    let app = app::build_router(config).await?;
+    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+    let listener = tokio::net::TcpListener::bind(addr).await?;
 
-    OK(())
+    info!("Server listening on {}", addr);
+
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }

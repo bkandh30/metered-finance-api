@@ -6,14 +6,14 @@ use axum::{
 use serde_json::json;
 use std::sync::Arc;
 use tracing::error;
-use chrono;
+use chrono::Utc;
 
 use crate::app::AppState;
 
 pub async fn health_live() -> Json<serde_json::Value> {
     Json(json!({
         "status": "live",
-        "timestamp": chrono::Utc::now().to_rfc3339()
+        "timestamp": Utc::now().to_rfc3339()
     }))
 }
 
@@ -25,7 +25,7 @@ pub async fn health_ready(
             Ok(Json(json!({
                 "status": "ready",
                 "database": "healthy",
-                "timestamp": chrono::Utc::now().to_rfc3339()
+                "timestamp": Utc::now().to_rfc3339()
             })))
         }
         Err(e) => {
@@ -36,7 +36,7 @@ pub async fn health_ready(
                     "status": "not_ready",
                     "database": "unhealthy",
                     "error": "Database connection failed",
-                    "timestamp": chrono::Utc::now().to_rfc3339()
+                    "timestamp": Utc::now().to_rfc3339()
                 }))
             ))
         }

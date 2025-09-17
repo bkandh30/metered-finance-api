@@ -1,6 +1,7 @@
 use axum::{
     Router,
     http::StatusCode,
+    routing::get,
 };
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
@@ -42,12 +43,7 @@ pub struct ApiDoc;
 pub fn openapi_routes() -> Router {
     Router::new()
         .merge(SwaggerUi::new("/docs").url("/openapi.json", ApiDoc::openapi()))
-        .route("/openapi.json", axum::routing::get(openapi_json))
-        .route("/openapi.yaml", axum::routing::get(openapi_yaml))
-}
-
-async fn openapi_json() -> axum::response::Json<utoipa::openapi::OpenApi> {
-    axum::response::Json(ApiDoc::openapi())
+        .route("/openapi.yaml", get(openapi_yaml))
 }
 
 async fn openapi_yaml() -> Result<String, StatusCode> {

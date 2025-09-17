@@ -1,52 +1,56 @@
 use anyhow::Result;
 use axum::{
-    Router, 
-    routing::get,
     http::HeaderValue,
-};
-use tower::ServiceBuilder;
-use tower_http::{
-    cors::CorsLayer,
-    trace::TraceLayer,
-    timeout::TimeoutLayer,
-    set_header::SetResponseHeaderLayer,
+    routing::get,
+    Router,
 };
 use std::time::Duration;
+use tower_http::{
+    cors::CorsLayer, 
+    timeout::TimeoutLayer, 
+    trace::TraceLayer
+};
 
+use crate::handlers::{
+    health, 
+    metrics, 
+    metrics::Metrics
+};
 use crate::{
-    config::Config,
-    handlers::{health, metrics},
-    middleware::request_id::RequestIdLayer,
-    openapi,
+    config::Config, 
+    middleware::request_id::request_id_layers, 
+    openapi
 };
 
 pub async fn build_router(_config: Config) -> Result<Router> {
-    let metrics_handle = metrics::init_metrics();
-    
+    let Metrics {
+        router: metrics_router,
+        layer: prom_layer,
+    } = metrics::init();
+
     let cors = CorsLayer::new()
         .allow_origin("*".parse::<HeaderValue>()?)
         .allow_methods(tower_http::cors::Any)
         .allow_headers(tower_http::cors::Any);
 
+    let (propagate_xrid, set_xrid) = request_id_layers();
+
     let app = Router::new()
         .route("/health/live", get(health::health_live))
         .route("/health/ready", get(health::health_ready))
-        .route("/metrics", get(move || metrics::metrics_handler(metrics_handle.clone())))
+        .merge(metrics_router)
         .merge(openapi::openapi_routes())
         .nest("/v1", api_v1_routes())
-        .layer(
-            ServiceBuilder::new()
-                .layer(RequestIdLayer)
-                .layer(TraceLayer::new_for_http())
-                .layer(cors)
-                .layer(TimeoutLayer::new(Duration::from_secs(30)))
-                .layer(metrics::create_metrics_layer())
-        );
-    
+        .layer(prom_layer)
+        .layer(TimeoutLayer::new(Duration::from_secs(30)))
+        .layer(cors)
+        .layer(set_xrid)
+        .layer(propagate_xrid)
+        .layer(TraceLayer::new_for_http());
+
     Ok(app)
 }
 
 fn api_v1_routes() -> Router {
-    Router::new()
-        .route("/", get(|| async { "API v1" }))
+    Router::new().route("/", get(|| async { "API v1" }))
 }

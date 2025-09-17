@@ -1,7 +1,7 @@
 -- Add up migration script here
 CREATE TABLE IF NOT EXISTS idempotency_keys (
-    idempotency_key TEXT PRIMARY KEY,
     account_id TEXT NOT NULL REFERENCES accounts(account_id) ON DELETE CASCADE,
+    idempotency_key TEXT NOT NULL,
     txn_id TEXT UNIQUE,
     response_body JSONB,
     status_code INT,

@@ -1,17 +1,20 @@
 -- Add up migration script here
 CREATE OR REPLACE FUNCTION cleanup_expired_idempotency_keys()
-RETURNS INTEGER AS $$
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
 DECLARE
     deleted_count INTEGER;
 BEGIN
     DELETE FROM idempotency_keys
-    WHERE expires_at < NOW()
-    RETURNING COUNT(*) INTO deleted_count;
-    
+    WHERE expires_at < NOW();
+
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+
     RETURN deleted_count;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
-CREATE INDEX IF NOT EXISTS idx_idempotency_cleanup 
-ON idempotency_keys(expires_at) 
-WHERE expires_at < NOW();
+
+CREATE INDEX IF NOT EXISTS idx_idempotency_expires
+ON idempotency_keys (expires_at);

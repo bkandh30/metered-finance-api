@@ -59,6 +59,7 @@ pub async fn build_router(config: Config) -> Result<Router> {
         .merge(metrics_router)
         .merge(openapi::openapi_routes())
         .nest("/v1", api_v1_routes())
+        .with_state(state)
         .layer(prom_layer)
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(cors)

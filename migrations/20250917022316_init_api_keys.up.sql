@@ -3,10 +3,10 @@ CREATE TABLE IF NOT EXISTS api_keys (
     key_id TEXT PRIMARY KEY,
     prefix TEXT NOT NULL,
     secret_hash TEXT NOT NULL,
-    scopes TEXT[] NOT NULL DEFAULT '{}',
+    scopes TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
     active BOOLEAN NOT NULL DEFAULT TRUE,
     last_used_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 

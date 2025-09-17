@@ -9,6 +9,7 @@ argon2 = "0.5.3"
 axum = { version = "0.8.4", features = ["macros", "json"] }
 axum-prometheus = "0.9.0"
 base64 = "0.22.1"
+chrono = { version = "0.4.42", features = ["serde"] }
 dotenvy = "0.15.7"
 http = "1.3.1"
 http-body = "1.0.1"

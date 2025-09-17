@@ -16,13 +16,28 @@ use crate::handlers::{
     metrics, 
     metrics::Metrics
 };
+
 use crate::{
-    config::Config, 
+    config::Config,
+    db::PgPool,
     middleware::request_id::request_id_layers, 
     openapi
 };
 
-pub async fn build_router(_config: Config) -> Result<Router> {
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: PgPool,
+    pub config: Config,
+}
+
+pub async fn build_router(config: Config) -> Result<Router> {
+    let pool = crate::db::init_pool(&config.database_url).await?;
+
+    let state = Arc::new(AppState {
+        pool: pool.clone(),
+        config: config.clone(),
+    });
+    
     let Metrics {
         router: metrics_router,
         layer: prom_layer,
@@ -37,7 +52,10 @@ pub async fn build_router(_config: Config) -> Result<Router> {
 
     let app = Router::new()
         .route("/health/live", get(health::health_live))
-        .route("/health/ready", get(health::health_ready))
+        .route("/health/ready", get({
+            let state = state.clone();
+            move |State(app_state): State<Arc<AppState>>| health::health_ready(State(app_state))
+        }))
         .merge(metrics_router)
         .merge(openapi::openapi_routes())
         .nest("/v1", api_v1_routes())

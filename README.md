@@ -1,1 +1,19 @@
-# metered-finance-api
+# Metered Finance API Server
+
+- [x] Phase 1: Repository Bootstrap
+- [x] Phase 2: Observability & App Skeleton
+- [x] Phase 3: Neon Postgres Wiring & Migrations
+- [x] Phase 4: OpenAPI Strategy & Serving
+- [x] Phase 5: Domain Models & Reusable Components
+- [x] Phase 6: Security Schemes & Middleware
+- [x] Phase 7: Error Model & Mapping
+- [x] Phase 8: Pagination & Filters
+
+- [ ] Phase 9: Rate Limiting & Quotas
+- [ ] Phase 10: Core Endpoints & Logic
+- [ ] Phase 11: OpenAPI Polish
+- [ ] Phase 12: Request Logging & Usage Metering
+- [ ] Phase 13: Containerization & Deploy
+- [ ] Phase 14: Data Seeding & Demo UX
+- [ ] Phase 15: README Content
+- [ ] Phase 16: Final Testing & Verification

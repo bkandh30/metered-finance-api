@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use crate::{
     app::AppState,
-    middleware::{auth::ClientAuth, errors::AppError},
+    middleware::auth::ClientAuth,
     models::quota::{QuotaService, RateLimitService},
 };
 

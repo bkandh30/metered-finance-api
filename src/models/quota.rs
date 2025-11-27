@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use utoipa::ToSchema;
@@ -6,7 +5,8 @@ use utoipa::ToSchema;
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct QuotaUsage {
     pub key_id: String,
-    pub usage_date: NaiveDate,
+    #[schema(value_type = String, format = Date, example = "2024-01-15")]
+    pub usage_date: String,
     pub request_count: i32,
 }
 
@@ -63,6 +63,7 @@ impl QuotaService {
         pool: &PgPool,
         key_id: &str,
     ) -> Result<QuotaUsageStats, sqlx::Error> {
+        // Get today's usage
         let today = sqlx::query_scalar::<_, Option<i32>>(
             r#"
             SELECT request_count

@@ -1,4 +1,4 @@
-use crate::models::keys::*;
+use metered_finance_api::models::keys::*;
 
 #[test]
 fn test_scope_serialization() {

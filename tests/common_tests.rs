@@ -1,4 +1,4 @@
-use crate::models::common::*;
+use metered_finance_api::models::common::*;
 
 #[test]
 fn test_cursor_encode_decode() {

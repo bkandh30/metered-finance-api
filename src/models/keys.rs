@@ -130,10 +130,10 @@ impl ApiKeyGenerator {
         const CHARSET: &[u8] = b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         const KEY_LENGTH: usize = 32;
         
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let random_part: String = (0..KEY_LENGTH)
             .map(|_| {
-                let idx = rng.gen_range(0..CHARSET.len());
+                let idx = rng.random_range(0..CHARSET.len());
                 CHARSET[idx] as char
             })
             .collect();

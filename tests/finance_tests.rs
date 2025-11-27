@@ -1,4 +1,4 @@
-use crate::models::finance::*;
+use metered_finance_api::models::finance::*;
 
 #[test]
 fn test_currency_validation() {

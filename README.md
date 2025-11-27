@@ -8,8 +8,8 @@
 - [x] Phase 6: Security Schemes & Middleware
 - [x] Phase 7: Error Model & Mapping
 - [x] Phase 8: Pagination & Filters
+- [x] Phase 9: Rate Limiting & Quotas
 
-- [ ] Phase 9: Rate Limiting & Quotas
 - [ ] Phase 10: Core Endpoints & Logic
 - [ ] Phase 11: OpenAPI Polish
 - [ ] Phase 12: Request Logging & Usage Metering

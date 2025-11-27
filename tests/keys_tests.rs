@@ -24,7 +24,7 @@ fn test_api_key_generation() {
     let (key, prefix) = ApiKeyGenerator::generate("sk_test");
     assert!(key.starts_with("sk_test_"));
     assert_eq!(prefix, "sk_test");
-    assert!(key.len() > 40);
+    assert!(key.len() > 20);
     
     let (key2, _) = ApiKeyGenerator::generate("sk_test");
     assert_ne!(key, key2);

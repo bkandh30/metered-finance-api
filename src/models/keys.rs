@@ -161,9 +161,13 @@ impl ApiKeyGenerator {
     }
     
     pub fn extract_prefix(api_key: &str) -> Option<String> {
-        api_key.split('_').take(2).collect::<Vec<_>>().get(..2).map(|parts| {
-            format!("{}_{}", parts[0], parts[1])
-        })
+        let parts: Vec<&str> = api_key.split('_').collect();
+
+        if parts.len() >= 3 {
+            Some(format!("{}_{}", parts[0], parts[1]))
+        } else {
+            None
+        }
     }
 }
 

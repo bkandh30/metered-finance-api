@@ -55,7 +55,7 @@ impl std::fmt::Display for TransactionStatus {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type, ToSchema, PartialEq, Eq)]
 #[sqlx(type_name = "TEXT")]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum FailureReason {
     InsufficientFunds,
     CardDeclined,
@@ -207,10 +207,12 @@ pub struct TransactionFilters {
     pub currency: Option<String>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     #[serde(with = "time::serde::rfc3339::option")]
     pub from_timestamp: Option<OffsetDateTime>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
     #[serde(with = "time::serde::rfc3339::option")]
     pub to_timestamp: Option<OffsetDateTime>,
 }

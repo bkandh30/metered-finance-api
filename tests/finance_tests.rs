@@ -171,4 +171,6 @@ fn test_transaction_filters_deserialization() {
     assert_eq!(filters.transaction_type, Some(TransactionType::Payment));
     assert_eq!(filters.status, Some(TransactionStatus::Succeeded));
     assert_eq!(filters.currency, Some("USD".to_string()));
+    assert_eq!(filters.from_timestamp, None);
+    assert_eq!(filters.to_timestamp, None);
 }

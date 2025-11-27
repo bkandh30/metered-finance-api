@@ -54,7 +54,7 @@ pub struct ApiKey {
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateApiKeyRequest {
-    pub scopes: Vec<String>,
+    pub scopes: Vec<Scope>,
 }
 
 impl CreateApiKeyRequest {
@@ -69,12 +69,6 @@ impl CreateApiKeyRequest {
         
         if unique_scopes.len() != self.scopes.len() {
             return Err(ValidationError::DuplicateScopes);
-        }
-        
-        for scope in &unique_scopes {
-            if !Scope::from_str(scope).is_some() {
-                return Err(ValidationError::InvalidScope);
-            }
         }
         
         Ok(())

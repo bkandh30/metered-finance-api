@@ -93,7 +93,7 @@ pub async fn list_api_keys(
     params.validate()
         .map_err(|e| AppError::ValidationError(e.to_string()))?;
 
-    let limit = params.limit.unwrap_or(20);
+    let limit = params.limit.unwrap_or(20) as i64;
 
     let keys = if let Some(cursor) = &params.cursor {
         let decoded = cursor.decode_string()

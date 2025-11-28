@@ -1,161 +1,141 @@
+use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use serde::{Deserialize, Serialize};
-use utoipa::{IntoParams, ToSchema};
-use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Cursor(pub String);
 
 impl Cursor {
     pub fn new(timestamp: &time::OffsetDateTime, id: &str) -> Self {
-        let payload = format!("{}|{}", timestamp.unix_timestamp_nanos(), id);
-        let encoded = URL_SAFE_NO_PAD.encode(payload.as_bytes());
-        Self(encoded)
+        let encoded = format!("{}|{}", timestamp.unix_timestamp(), id);
+        Self(BASE64_STANDARD.encode(encoded.as_bytes()))
+    }
+
+    pub fn encode(id: &str) -> Self {
+        Self(BASE64_STANDARD.encode(id.as_bytes()))
+    }
+
+    pub fn decode_string(&self) -> Result<String, CursorError> {
+        let decoded = BASE64_STANDARD
+            .decode(self.0.as_bytes())
+            .map_err(|_| CursorError::InvalidFormat)?;
+        
+        String::from_utf8(decoded)
+            .map_err(|_| CursorError::InvalidFormat)
     }
 
     pub fn decode(&self) -> Result<(time::OffsetDateTime, String), CursorError> {
-        let decoded = URL_SAFE_NO_PAD
+        let decoded = BASE64_STANDARD
             .decode(self.0.as_bytes())
-            .map_err(|_| CursorError::Invalid)?;
-        
-        let payload = String::from_utf8(decoded)
-            .map_err(|_| CursorError::Invalid)?;
-        
-        let parts: Vec<&str> = payload.split('|').collect();
+            .map_err(|_| CursorError::InvalidFormat)?;
+
+        let decoded_str = std::str::from_utf8(&decoded)
+            .map_err(|_| CursorError::InvalidFormat)?;
+
+        let parts: Vec<&str> = decoded_str.split('|').collect();
         if parts.len() != 2 {
-            return Err(CursorError::Invalid);
+            return Err(CursorError::InvalidFormat);
         }
+
+        let timestamp = parts[0]
+            .parse::<i64>()
+            .map_err(|_| CursorError::InvalidFormat)?;
         
-        let timestamp_nanos: i128 = parts[0]
-            .parse()
-            .map_err(|_| CursorError::Invalid)?;
-        
-        let timestamp = time::OffsetDateTime::from_unix_timestamp_nanos(timestamp_nanos)
-            .map_err(|_| CursorError::Invalid)?;
-        
-        Ok((timestamp, parts[1].to_string()))
+        let dt = time::OffsetDateTime::from_unix_timestamp(timestamp)
+            .map_err(|_| CursorError::InvalidFormat)?;
+
+        Ok((dt, parts[1].to_string()))
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone)]
 pub enum CursorError {
-    #[error("Invalid cursor format")]
-    Invalid,
+    InvalidFormat,
 }
 
-#[derive(Debug, Deserialize, IntoParams, ToSchema)]
+impl std::fmt::Display for CursorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            CursorError::InvalidFormat => write!(f, "Invalid cursor format"),
+        }
+    }
+}
+
+impl std::error::Error for CursorError {}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct PaginationParams {
-    #[serde(default = "default_limit")]
-    #[param(minimum = 1, maximum = 100)]
-    pub limit: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cursor: Option<Cursor>,
     
-    #[serde(default)]
-    pub cursor: Option<String>,
-}
-
-fn default_limit() -> u32 {
-    20
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub limit: Option<u32>,
 }
 
 impl PaginationParams {
     pub fn validate(&self) -> Result<(), ValidationError> {
-        if self.limit < 1 || self.limit > 100 {
-            return Err(ValidationError::InvalidLimit);
+        if let Some(limit) = self.limit {
+            if limit < 1 || limit > 100 {
+                return Err(ValidationError::InvalidLimit);
+            }
         }
         Ok(())
     }
 }
 
-#[derive(Debug, Serialize, ToSchema)]
-pub struct PaginatedResponse<T: Serialize> {
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+pub struct PaginatedResponse<T> {
     pub data: Vec<T>,
     pub has_more: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub next_cursor: Option<String>,
+    pub next_cursor: Option<Cursor>,
 }
 
-impl<T: Serialize> PaginatedResponse<T> {
-    pub fn new(data: Vec<T>, has_more: bool, next_cursor: Option<String>) -> Self {
-        Self {
-            data,
-            has_more,
-            next_cursor,
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ValidationError {
+    InvalidLimit,
+}
+
+impl std::fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValidationError::InvalidLimit => write!(f, "Limit must be between 1 and 100"),
         }
     }
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+impl std::error::Error for ValidationError {}
+
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ErrorResponse {
     pub error: ErrorDetail,
 }
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ErrorDetail {
-    pub code: ErrorCode,
+    pub code: String,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<serde_json::Value>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ErrorCode {
     Unauthorized,
     Forbidden,
     InvalidApiKey,
-    InvalidAdminKey,
     
     ValidationError,
     InvalidInput,
-    InvalidCursor,
-    InvalidLimit,
     
     NotFound,
-    ResourceNotFound,
-    AccountNotFound,
-    TransactionNotFound,
+    AlreadyExists,
     
     RateLimitExceeded,
     QuotaExceeded,
     
-    IdempotencyMismatch,
-    
-    InsufficientFunds,
-    DuplicateTransaction,
-    InvalidTransactionState,
-    
     InternalError,
     DatabaseError,
     ServiceUnavailable,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum ValidationError {
-    #[error("Invalid limit: must be between 1 and 100")]
-    InvalidLimit,
-    
-    #[error("Invalid cursor format")]
-    InvalidCursor,
-    
-    #[error("Missing required field: {0}")]
-    MissingField(String),
-    
-    #[error("Invalid field value: {0}")]
-    InvalidField(String),
-}
-
-pub mod timestamp {
-    use time::OffsetDateTime;
-    
-    pub fn now() -> OffsetDateTime {
-        OffsetDateTime::now_utc()
-    }
-    
-    pub fn unix_timestamp() -> i64 {
-        OffsetDateTime::now_utc().unix_timestamp()
-    }
-    
-    pub fn from_unix(timestamp: i64) -> OffsetDateTime {
-        OffsetDateTime::from_unix_timestamp(timestamp)
-            .unwrap_or_else(|_| OffsetDateTime::now_utc())
-    }
 }

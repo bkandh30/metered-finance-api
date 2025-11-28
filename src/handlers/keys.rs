@@ -24,10 +24,9 @@ pub async fn create_api_key(
     req.validate()
         .map_err(|e| AppError::ValidationError(e))?;
 
-    let generator = ApiKeyGenerator;
     let (api_key, key_id, prefix, secret_hash) = ApiKeyGenerator::generate_full();
 
-    let limit = params.limit.unwrap_or(20) as i64;
+    let rate_limit = req.rate_limit_per_minute.unwrap_or(60);
     let daily_quota = req.daily_quota.unwrap_or(10_000);
     let monthly_quota = req.monthly_quota.unwrap_or(300_000);
 

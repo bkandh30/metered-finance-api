@@ -127,7 +127,7 @@ pub async fn list_accounts(
     };
 
     let has_more = accounts.len() > limit as usize;
-    let mut items: Vec<AccountResponse> = accounts
+    let items: Vec<AccountResponse> = accounts
         .into_iter()
         .take(limit as usize)
         .map(|a| AccountResponse {

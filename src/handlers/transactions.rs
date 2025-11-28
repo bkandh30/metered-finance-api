@@ -138,7 +138,7 @@ pub async fn get_transaction(
 pub async fn list_transactions(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
-    Query(mut params): Query<PaginationParams>,
+    Query(params): Query<PaginationParams>,
     Query(filters): Query<TransactionFilters>,
 ) -> Result<Json<PaginatedResponse<TransactionResponse>>, AppError> {
     params.validate()

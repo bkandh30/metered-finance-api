@@ -9,7 +9,7 @@ mod handlers;
 mod middleware;
 mod models;
 mod openapi;
-
+mod routes;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -33,15 +33,18 @@ async fn main() -> Result<()> {
 
     // Load configuration
     let config = config::load_config()?;
-    
     let port = config.port;
+
     let app = app::build_router(config).await?;
+
     let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
     let listener = tokio::net::TcpListener::bind(addr).await?;
 
     info!("Server listening on {}", addr);
     info!("Swagger UI available at http://{}/docs", addr);
     info!("Metrics available at http://{}/metrics", addr);
+    info!("Health check available at http://{}/health/live", addr);
+    info!("API endpoints available at http://{}/api/*", addr);
 
     axum::serve(listener, app).await?;
 

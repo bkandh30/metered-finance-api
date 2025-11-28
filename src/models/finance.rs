@@ -1,19 +1,41 @@
+use chrono::{DateTime, Utc};
+use rand::Rng;
 use serde::{Deserialize, Serialize};
-use sqlx::Type;
 use utoipa::ToSchema;
-use time::OffsetDateTime;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type, ToSchema, PartialEq, Eq)]
-#[sqlx(type_name = "TEXT")]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum TransactionType {
     Payment,
     Refund,
+    Adjustment,
+    Fee,
     Payout,
+    Chargeback,
     Transfer,
-    Authorization,
-    Capture,
-    Reversal,
+}
+
+impl Default for TransactionType {
+    fn default() -> Self {
+        TransactionType::Payment
+    }
+}
+
+impl std::str::FromStr for TransactionType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "payment" => Ok(TransactionType::Payment),
+            "refund" => Ok(TransactionType::Refund),
+            "adjustment" => Ok(TransactionType::Adjustment),
+            "fee" => Ok(TransactionType::Fee),
+            "payout" => Ok(TransactionType::Payout),
+            "chargeback" => Ok(TransactionType::Chargeback),
+            "transfer" => Ok(TransactionType::Transfer),
+            _ => Err(format!("Invalid transaction type: {}", s)),
+        }
+    }
 }
 
 impl std::fmt::Display for TransactionType {
@@ -21,200 +43,171 @@ impl std::fmt::Display for TransactionType {
         match self {
             TransactionType::Payment => write!(f, "payment"),
             TransactionType::Refund => write!(f, "refund"),
+            TransactionType::Adjustment => write!(f, "adjustment"),
+            TransactionType::Fee => write!(f, "fee"),
             TransactionType::Payout => write!(f, "payout"),
+            TransactionType::Chargeback => write!(f, "chargeback"),
             TransactionType::Transfer => write!(f, "transfer"),
-            TransactionType::Authorization => write!(f, "authorization"),
-            TransactionType::Capture => write!(f, "capture"),
-            TransactionType::Reversal => write!(f, "reversal"),
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type, ToSchema, PartialEq, Eq)]
-#[sqlx(type_name = "TEXT")]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum TransactionStatus {
     Pending,
-    Succeeded,
+    Processing,
+    Completed,
     Failed,
-    Reversed,
-    Canceled,
+    Cancelled,
+}
+
+impl Default for TransactionStatus {
+    fn default() -> Self {
+        TransactionStatus::Pending
+    }
+}
+
+impl std::str::FromStr for TransactionStatus {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "pending" => Ok(TransactionStatus::Pending),
+            "processing" => Ok(TransactionStatus::Processing),
+            "completed" => Ok(TransactionStatus::Completed),
+            "failed" => Ok(TransactionStatus::Failed),
+            "cancelled" => Ok(TransactionStatus::Cancelled),
+            _ => Err(format!("Invalid transaction status: {}", s)),
+        }
+    }
 }
 
 impl std::fmt::Display for TransactionStatus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             TransactionStatus::Pending => write!(f, "pending"),
-            TransactionStatus::Succeeded => write!(f, "succeeded"),
+            TransactionStatus::Processing => write!(f, "processing"),
+            TransactionStatus::Completed => write!(f, "completed"),
             TransactionStatus::Failed => write!(f, "failed"),
-            TransactionStatus::Reversed => write!(f, "reversed"),
-            TransactionStatus::Canceled => write!(f, "canceled"),
+            TransactionStatus::Cancelled => write!(f, "cancelled"),
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type, ToSchema, PartialEq, Eq)]
-#[sqlx(type_name = "TEXT")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum FailureReason {
     InsufficientFunds,
-    CardDeclined,
-    RiskBlocked,
-    Duplicate,
-    InternalError,
+    InvalidAccount,
+    NetworkError,
+    Timeout,
+    Fraud,
 }
 
-impl std::fmt::Display for FailureReason {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            FailureReason::InsufficientFunds => write!(f, "insufficient_funds"),
-            FailureReason::CardDeclined => write!(f, "card_declined"),
-            FailureReason::RiskBlocked => write!(f, "risk_blocked"),
-            FailureReason::Duplicate => write!(f, "duplicate"),
-            FailureReason::InternalError => write!(f, "internal_error"),
-        }
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+pub enum Currency {
+    USD,
+    EUR,
+    GBP,
+    JPY,
+    CAD,
+    AUD,
+}
+
+impl Default for Currency {
+    fn default() -> Self {
+        Currency::USD
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Type, ToSchema, PartialEq, Eq)]
-pub struct Currency(pub String);
+impl std::str::FromStr for Currency {
+    type Err = String;
 
-impl Currency {
-    pub fn new(code: &str) -> Result<Self, CurrencyError> {
-        if code.len() != 3 || !code.chars().all(|c| c.is_ascii_uppercase()) {
-            return Err(CurrencyError::Invalid);
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "USD" => Ok(Currency::USD),
+            "EUR" => Ok(Currency::EUR),
+            "GBP" => Ok(Currency::GBP),
+            "JPY" => Ok(Currency::JPY),
+            "CAD" => Ok(Currency::CAD),
+            "AUD" => Ok(Currency::AUD),
+            _ => Err(format!("Invalid currency: {}", s)),
         }
-        Ok(Self(code.to_string()))
-    }
-
-    pub fn usd() -> Self {
-        Self("USD".to_string())
-    }
-
-    pub fn eur() -> Self {
-        Self("EUR".to_string())
-    }
-
-    pub fn gbp() -> Self {
-        Self("GBP".to_string())
     }
 }
 
 impl std::fmt::Display for Currency {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0)
+        match self {
+            Currency::USD => write!(f, "USD"),
+            Currency::EUR => write!(f, "EUR"),
+            Currency::GBP => write!(f, "GBP"),
+            Currency::JPY => write!(f, "JPY"),
+            Currency::CAD => write!(f, "CAD"),
+            Currency::AUD => write!(f, "AUD"),
+        }
     }
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum CurrencyError {
-    #[error("Invalid currency code")]
-    Invalid,
+impl Currency {
+    pub fn validate(code: &str) -> Result<Self, ValidationError> {
+        code.parse().map_err(|_| ValidationError::InvalidCurrency)
+    }
+
+    pub fn is_valid(code: &str) -> bool {
+        matches!(
+            code.to_uppercase().as_str(),
+            "USD" | "EUR" | "GBP" | "JPY" | "CAD" | "AUD"
+        )
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Account {
     pub account_id: String,
-    #[serde(with = "time::serde::rfc3339")]
-    pub created_at: OffsetDateTime,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<serde_json::Value>,
+    #[schema(value_type = String, format = DateTime)]
+    pub created_at: DateTime<Utc>,
+    #[schema(value_type = String, format = DateTime)]
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Transaction {
-    pub txn_id: String,
+    pub transaction_id: String,
     pub account_id: String,
+    pub amount: f64,
+    pub currency: Currency,
     pub transaction_type: TransactionType,
     pub status: TransactionStatus,
-    pub amount_cents: i64,
-    pub currency: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<serde_json::Value>,
-    #[serde(with = "time::serde::rfc3339")]
-    pub timestamp: OffsetDateTime,
-    #[serde(with = "time::serde::rfc3339")]
-    pub created_at: OffsetDateTime,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub failure_reason: Option<FailureReason>,
+    #[schema(value_type = String, format = DateTime)]
+    pub created_at: DateTime<Utc>,
+    #[schema(value_type = String, format = DateTime)]
+    pub processed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Deserialize, ToSchema)]
-pub struct CreateTransactionRequest {
-    pub account_id: String,
-    pub transaction_type: TransactionType,
-    pub amount_cents: i64,
-    pub currency: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<serde_json::Value>,
-}
-
-impl CreateTransactionRequest {
-    pub fn validate(&self) -> Result<(), ValidationError> {
-        if self.account_id.is_empty() {
-            return Err(ValidationError::EmptyAccountId);
-        }
-        
-        if self.amount_cents < 0 {
-            return Err(ValidationError::NegativeAmount);
-        }
-        
-        Currency::new(&self.currency)
-            .map_err(|_| ValidationError::InvalidCurrency)?;
-        
-        if let Some(desc) = &self.description {
-            if desc.len() > 500 {
-                return Err(ValidationError::DescriptionTooLong);
-            }
-        }
-        
-        Ok(())
-    }
-}
-
-#[derive(Debug, Serialize, ToSchema)]
-pub struct CreateTransactionResponse {
-    pub txn_id: String,
-    pub account_id: String,
-    pub transaction_type: TransactionType,
-    pub status: TransactionStatus,
-    pub amount_cents: i64,
-    pub currency: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub metadata: Option<serde_json::Value>,
-    #[serde(with = "time::serde::rfc3339")]
-    pub timestamp: OffsetDateTime,
-    #[serde(with = "time::serde::rfc3339")]
-    pub created_at: OffsetDateTime,
-}
-
-#[derive(Debug, Deserialize, utoipa::IntoParams, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct TransactionFilters {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<String>,
-    
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub transaction_type: Option<TransactionType>,
-    
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<TransactionStatus>,
-    
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub currency: Option<String>,
-    
+    pub transaction_type: Option<TransactionType>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    #[serde(with = "time::serde::rfc3339::option")]
-    pub from_timestamp: Option<OffsetDateTime>,
-    
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(default)]
-    #[serde(with = "time::serde::rfc3339::option")]
-    pub to_timestamp: Option<OffsetDateTime>,
+    pub currency: Option<Currency>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<String>, format = DateTime)]
+    pub created_after: Option<DateTime<Utc>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<String>, format = DateTime)]
+    pub created_before: Option<DateTime<Utc>>,
 }
 
 impl Default for TransactionFilters {
@@ -230,25 +223,39 @@ impl Default for TransactionFilters {
     }
 }
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValidationError {
-    #[error("Account ID cannot be empty")]
     EmptyAccountId,
-    
-    #[error("Amount cannot be negative")]
+    InvalidAccountId,
     NegativeAmount,
-    
-    #[error("Invalid currency code")]
     InvalidCurrency,
-    
-    #[error("Description too long: maximum 500 characters")]
-    DescriptionTooLong,
+    InvalidTransactionType,
+    InvalidStatus,
 }
 
-pub fn generate_txn_id() -> String {
-    format!("txn_{}", uuid::Uuid::new_v4())
+impl std::fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ValidationError::EmptyAccountId => write!(f, "Account ID cannot be empty"),
+            ValidationError::InvalidAccountId => write!(f, "Invalid account ID format"),
+            ValidationError::NegativeAmount => write!(f, "Amount cannot be negative"),
+            ValidationError::InvalidCurrency => write!(f, "Invalid currency code"),
+            ValidationError::InvalidTransactionType => write!(f, "Invalid transaction type"),
+            ValidationError::InvalidStatus => write!(f, "Invalid transaction status"),
+        }
+    }
+}
+
+impl std::error::Error for ValidationError {}
+
+pub fn generate_transaction_id() -> String {
+    let timestamp = Utc::now().timestamp();
+    let random: u32 = rand::rng().random();
+    format!("txn_{}_{:08x}", timestamp, random)
 }
 
 pub fn generate_account_id() -> String {
-    format!("acc_{}", uuid::Uuid::new_v4())
+    let timestamp = Utc::now().timestamp();
+    let random: u32 = rand::rng().random();
+    format!("acc_{}_{:08x}", timestamp, random)
 }

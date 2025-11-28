@@ -135,6 +135,14 @@ impl ApiKeyGenerator {
         let full_key = format!("{}_{}", prefix, random_part);
         (full_key, prefix.to_string())
     }
+
+    pub fn generate_full() -> (String, String, String, String) {
+        let key_id = generate_key_id();
+        let prefix = format!("sk_live_{}", &key_id[4..11]);
+        let (api_key, secret_hash) = Self::generate(&prefix);
+        
+        (api_key, key_id, prefix, secret_hash)
+    }
     
     pub fn hash_secret(secret: &str) -> Result<String, KeyError> {
         let salt = SaltString::generate(&mut OsRng);

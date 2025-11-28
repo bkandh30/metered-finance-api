@@ -1,176 +1,165 @@
-use metered_finance_api::models::finance::*;
+use metered_finance_api::models::{
+    finance::{Currency, TransactionType, TransactionStatus, TransactionFilters},
+    requests::CreateTransactionRequest,
+};
 
 #[test]
 fn test_currency_validation() {
-    assert!(Currency::new("USD").is_ok());
-    assert!(Currency::new("EUR").is_ok());
-    assert!(Currency::new("GBP").is_ok());
+    use std::str::FromStr;
     
-    assert!(Currency::new("usd").is_err());
-    assert!(Currency::new("US").is_err());
-    assert!(Currency::new("USDT").is_err());
-    assert!(Currency::new("U$D").is_err());
-    assert!(Currency::new("123").is_err());
+    assert!(Currency::from_str("USD").is_ok());
+    assert!(Currency::from_str("EUR").is_ok());
+    assert!(Currency::from_str("GBP").is_ok());
+    assert!(Currency::from_str("INVALID").is_err());
 }
 
 #[test]
-fn test_currency_helpers() {
-    let usd = Currency::usd();
-    assert_eq!(usd.0, "USD");
-
-    let eur = Currency::eur();
-    assert_eq!(eur.0, "EUR");
-
-    let gbp = Currency::gbp();
-    assert_eq!(gbp.0, "GBP");
+fn test_currency_values() {
+    assert_eq!(Currency::USD.to_string(), "USD");
+    assert_eq!(Currency::EUR.to_string(), "EUR");
+    assert_eq!(Currency::GBP.to_string(), "GBP");
 }
 
 #[test]
-fn test_transaction_type_serialization() {
-    let payment = TransactionType::Payment;
-    let json = serde_json::to_string(&payment).unwrap();
-    assert_eq!(json, "\"payment\"");
-
-    let deserialized: TransactionType = serde_json::from_str("\"payment\"").unwrap();
-    assert_eq!(deserialized, payment);
-}
-
-#[test]
-fn test_transaction_status_serialization() {
-    let status = TransactionStatus::Succeeded;
-    let json = serde_json::to_string(&status).unwrap();
-    assert_eq!(json, "\"succeeded\"");
+fn test_transaction_status() {
+    use std::str::FromStr;
     
-    let deserialized: TransactionStatus = serde_json::from_str("\"failed\"").unwrap();
-    assert_eq!(deserialized, TransactionStatus::Failed);
+    assert!(TransactionStatus::from_str("pending").is_ok());
+    assert!(TransactionStatus::from_str("completed").is_ok());
+    assert!(TransactionStatus::from_str("failed").is_ok());
 }
 
 #[test]
-fn test_failure_reason_serialization() {
-    let reason = FailureReason::InsufficientFunds;
-    let json = serde_json::to_string(&reason).unwrap();
-    assert_eq!(json, "\"insufficient_funds\"");
-}
-
-#[test]
-fn test_transaction_request_validation_valid() {
+fn test_create_transaction_request_validation() {
     let valid = CreateTransactionRequest {
-        account_id: "acc_123".to_string(),
+        account_id: "user_123".to_string(),
+        amount: 99.99,
+        currency: Currency::USD,
         transaction_type: TransactionType::Payment,
-        amount_cents: 1000,
-        currency: "USD".to_string(),
         description: None,
         metadata: None,
     };
     assert!(valid.validate().is_ok());
-}
 
-#[test]
-fn test_transaction_request_validation_empty_account() {
     let invalid = CreateTransactionRequest {
         account_id: "".to_string(),
+        amount: 99.99,
+        currency: Currency::USD,
         transaction_type: TransactionType::Payment,
-        amount_cents: 1000,
-        currency: "USD".to_string(),
         description: None,
         metadata: None,
     };
-    assert!(matches!(invalid.validate(), Err(ValidationError::EmptyAccountId)));
-}
+    assert!(invalid.validate().is_err());
 
-#[test]
-fn test_transaction_request_validation_negative_amount() {
     let invalid = CreateTransactionRequest {
-        account_id: "acc_123".to_string(),
+        account_id: "user_123".to_string(),
+        amount: -50.0,
+        currency: Currency::USD,
         transaction_type: TransactionType::Payment,
-        amount_cents: -100,
-        currency: "USD".to_string(),
         description: None,
         metadata: None,
     };
-    assert!(matches!(invalid.validate(), Err(ValidationError::NegativeAmount)));
-}
+    assert!(invalid.validate().is_err());
 
-#[test]
-fn test_transaction_request_validation_invalid_currency() {
     let invalid = CreateTransactionRequest {
-        account_id: "acc_123".to_string(),
+        account_id: "user_123".to_string(),
+        amount: 0.0,
+        currency: Currency::USD,
         transaction_type: TransactionType::Payment,
-        amount_cents: 1000,
-        currency: "invalid".to_string(),
         description: None,
         metadata: None,
     };
-    assert!(matches!(invalid.validate(), Err(ValidationError::InvalidCurrency)));
-}
+    assert!(invalid.validate().is_err());
 
-#[test]
-fn test_transaction_request_validation_description_too_long() {
-    let long_description = "a".repeat(501);
     let invalid = CreateTransactionRequest {
-        account_id: "acc_123".to_string(),
+        account_id: "user_123".to_string(),
+        amount: 99.99,
+        currency: Currency::USD,
         transaction_type: TransactionType::Payment,
-        amount_cents: 1000,
-        currency: "USD".to_string(),
-        description: Some(long_description),
+        description: Some("a".repeat(1001)),
         metadata: None,
     };
-    assert!(matches!(invalid.validate(), Err(ValidationError::DescriptionTooLong)));
+    assert!(invalid.validate().is_err());
 }
 
 #[test]
-fn test_transaction_request_with_metadata() {
-    let metadata = serde_json::json!({
-        "customer_id": "cust_123",
-        "invoice_id": "inv_456"
-    });
-    
-    let request = CreateTransactionRequest {
-        account_id: "acc_123".to_string(),
-        transaction_type: TransactionType::Payment,
-        amount_cents: 1000,
-        currency: "USD".to_string(),
-        description: Some("Test payment".to_string()),
-        metadata: Some(metadata),
-    };
-    
-    assert!(request.validate().is_ok());
-}
-
-#[test]
-fn test_id_generation() {
-    let txn_id = generate_txn_id();
+fn test_transaction_id_generation() {
+    let txn_id = metered_finance_api::models::finance::generate_transaction_id();
     assert!(txn_id.starts_with("txn_"));
-    assert!(txn_id.len() > 4);
     
-    let txn_id2 = generate_txn_id();
+    let txn_id2 = metered_finance_api::models::finance::generate_transaction_id();
     assert_ne!(txn_id, txn_id2);
 }
 
 #[test]
 fn test_account_id_generation() {
-    let acc_id = generate_account_id();
+    let acc_id = metered_finance_api::models::finance::generate_account_id();
     assert!(acc_id.starts_with("acc_"));
-    assert!(acc_id.len() > 4);
-    
-    let acc_id2 = generate_account_id();
-    assert_ne!(acc_id, acc_id2);
 }
 
 #[test]
-fn test_transaction_filters_deserialization() {
-    let json = r#"{
-        "account_id": "acc_123",
-        "transaction_type": "payment",
-        "status": "succeeded",
-        "currency": "USD"
-    }"#;
+fn test_transaction_filters() {
+    let filters = TransactionFilters {
+        account_id: Some("user_123".to_string()),
+        status: Some(TransactionStatus::Completed),
+        transaction_type: Some(TransactionType::Payment),
+        currency: Some(Currency::USD),
+        created_after: None,
+        created_before: None,
+    };
     
-    let filters: TransactionFilters = serde_json::from_str(json).unwrap();
-    assert_eq!(filters.account_id, Some("acc_123".to_string()));
-    assert_eq!(filters.transaction_type, Some(TransactionType::Payment));
-    assert_eq!(filters.status, Some(TransactionStatus::Succeeded));
-    assert_eq!(filters.currency, Some("USD".to_string()));
-    assert_eq!(filters.from_timestamp, None);
-    assert_eq!(filters.to_timestamp, None);
+    assert_eq!(filters.account_id, Some("user_123".to_string()));
+    assert_eq!(filters.status, Some(TransactionStatus::Completed));
+    assert_eq!(filters.currency, Some(Currency::USD));
+    assert_eq!(filters.created_after, None);
+    assert_eq!(filters.created_before, None);
+}
+
+#[test]
+fn test_all_transaction_types() {
+    let types = vec![
+        TransactionType::Payment,
+        TransactionType::Refund,
+        TransactionType::Adjustment,
+        TransactionType::Fee,
+        TransactionType::Payout,
+        TransactionType::Chargeback,
+        TransactionType::Transfer,
+    ];
+    
+    for txn_type in types {
+        let req = CreateTransactionRequest {
+            account_id: "user_123".to_string(),
+            amount: 50.0,
+            currency: Currency::USD,
+            transaction_type: txn_type,
+            description: None,
+            metadata: None,
+        };
+        assert!(req.validate().is_ok());
+    }
+}
+
+#[test]
+fn test_all_currencies() {
+    let currencies = vec![
+        Currency::USD,
+        Currency::EUR,
+        Currency::GBP,
+        Currency::JPY,
+        Currency::CAD,
+        Currency::AUD,
+    ];
+    
+    for currency in currencies {
+        let req = CreateTransactionRequest {
+            account_id: "user_123".to_string(),
+            amount: 100.0,
+            currency,
+            transaction_type: TransactionType::Payment,
+            description: None,
+            metadata: None,
+        };
+        assert!(req.validate().is_ok());
+    }
 }

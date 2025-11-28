@@ -96,7 +96,7 @@ pub async fn list_accounts(
     let limit = params.limit.unwrap_or(20);
 
     let accounts = if let Some(cursor) = &params.cursor {
-        let decoded = cursor.decode()
+        let decoded = cursor.decode_string()
             .map_err(|e| AppError::InvalidInput(format!("Invalid cursor: {}", e)))?;
 
         sqlx::query_as::<_, (String, Option<serde_json::Value>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(

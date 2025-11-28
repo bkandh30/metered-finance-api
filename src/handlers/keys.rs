@@ -25,9 +25,9 @@ pub async fn create_api_key(
         .map_err(|e| AppError::ValidationError(e))?;
 
     let generator = ApiKeyGenerator;
-    let (api_key, key_id, prefix, secret_hash) = generator.generate();
+    let (api_key, key_id, prefix, secret_hash) = ApiKeyGenerator::generate_full();
 
-    let rate_limit = req.rate_limit_per_minute.unwrap_or(60);
+    let limit = params.limit.unwrap_or(20) as i64;
     let daily_quota = req.daily_quota.unwrap_or(10_000);
     let monthly_quota = req.monthly_quota.unwrap_or(300_000);
 
@@ -97,7 +97,7 @@ pub async fn list_api_keys(
     let limit = params.limit.unwrap_or(20);
 
     let keys = if let Some(cursor) = &params.cursor {
-        let decoded = cursor.decode()
+        let decoded = cursor.decode_string()
             .map_err(|e| AppError::InvalidInput(format!("Invalid cursor: {}", e)))?;
 
         sqlx::query_as::<_, (

@@ -17,7 +17,7 @@ use crate::{
 
 pub async fn create_account(
     State(state): State<Arc<AppState>>,
-    Extension(auth): Extension<ClientAuth>,
+    Extension(_auth): Extension<ClientAuth>,
     Json(req): Json<CreateAccountRequest>,
 ) -> Result<(StatusCode, Json<AccountResponse>), AppError> {
     req.validate()
@@ -93,7 +93,7 @@ pub async fn list_accounts(
     params.validate()
         .map_err(|e| AppError::ValidationError(e.to_string()))?;
 
-    let limit = params.limit.unwrap_or(20);
+    let limit = params.limit.unwrap_or(20) as i64;
 
     let accounts = if let Some(cursor) = &params.cursor {
         let decoded = cursor.decode_string()

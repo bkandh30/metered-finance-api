@@ -217,6 +217,19 @@ pub struct TransactionFilters {
     pub to_timestamp: Option<OffsetDateTime>,
 }
 
+impl Default for TransactionFilters {
+    fn default() -> Self {
+        Self {
+            account_id: None,
+            status: None,
+            transaction_type: None,
+            currency: None,
+            created_after: None,
+            created_before: None,
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub enum ValidationError {
     #[error("Account ID cannot be empty")]

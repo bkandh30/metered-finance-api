@@ -10,7 +10,7 @@ use crate::{
     middleware::{auth::ClientAuth, errors::AppError},
     models::{
         common::{PaginatedResponse, PaginationParams},
-        finance::{TransactionFilters, TransactionStatus, TransactionType},
+        finance::{TransactionFilters, TransactionStatus},
         requests::CreateTransactionRequest,
         responses::{BalanceResponse, TransactionResponse},
     },
@@ -144,7 +144,7 @@ pub async fn list_transactions(
     params.validate()
         .map_err(|e| AppError::ValidationError(e.to_string()))?;
 
-    let limit = params.limit.unwrap_or(20);
+    let limit = params.limit.unwrap_or(20) as i64;
 
     let mut query = String::from(
         r#"
@@ -197,7 +197,7 @@ pub async fn list_transactions(
     }
 
     if let Some(cursor) = &params.cursor {
-        let decoded = cursor.decode()
+        let decoded = cursor.decode_string()
             .map_err(|e| AppError::InvalidInput(format!("Invalid cursor: {}", e)))?;
         param_count += 1;
         query.push_str(&format!(" AND transaction_id > ${}", param_count));

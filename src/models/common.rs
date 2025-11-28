@@ -139,3 +139,22 @@ pub enum ErrorCode {
     DatabaseError,
     ServiceUnavailable,
 }
+
+impl std::fmt::Display for ErrorCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ErrorCode::Unauthorized => write!(f, "unauthorized"),
+            ErrorCode::Forbidden => write!(f, "forbidden"),
+            ErrorCode::InvalidApiKey => write!(f, "invalid_api_key"),
+            ErrorCode::ValidationError => write!(f, "validation_error"),
+            ErrorCode::InvalidInput => write!(f, "invalid_input"),
+            ErrorCode::NotFound => write!(f, "not_found"),
+            ErrorCode::AlreadyExists => write!(f, "already_exists"),
+            ErrorCode::RateLimitExceeded => write!(f, "rate_limit_exceeded"),
+            ErrorCode::QuotaExceeded => write!(f, "quota_exceeded"),
+            ErrorCode::InternalError => write!(f, "internal_error"),
+            ErrorCode::DatabaseError => write!(f, "database_error"),
+            ErrorCode::ServiceUnavailable => write!(f, "service_unavailable"),
+        }
+    }
+}

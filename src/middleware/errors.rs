@@ -106,7 +106,7 @@ impl IntoResponse for AppError {
 
         let error_response = ErrorResponse {
             error: ErrorDetail {
-                code: error_code,
+                code: error_code.to_string(),
                 message,
                 details,
             },

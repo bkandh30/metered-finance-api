@@ -1,0 +1,58 @@
+services:
+  # Main API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: metered-finance-api
+    ports:
+      - "3030:3030"
+    environment:
+      - PORT=3030
+      - RUST_LOG=info,axum=info,tower_http=info
+      - DATABASE_URL=${DATABASE_URL}
+      - RATE_LIMIT_PER_MINUTE=${RATE_LIMIT_PER_MINUTE:-120}
+      - QUOTA_DAILY_REQUESTS=${QUOTA_DAILY_REQUESTS:-5000}
+      - ADMIN_KEY=${ADMIN_KEY}
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3030/health/live"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - metered-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # PostgreSQL database (for local development)
+  postgres:
+    image: postgres:15-alpine
+    container_name: metered-finance-db
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-metered_finance}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - metered-network
+
+networks:
+  metered-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

@@ -19,4 +19,3 @@ coverage/
 *.md
 !CHANGELOG.md
 docker-compose.yml
-prometheus.yml

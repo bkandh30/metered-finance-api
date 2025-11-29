@@ -14,6 +14,7 @@ use crate::models::{
     quota::{QuotaLimits, QuotaUsage, QuotaUsageStats, QuotaStatus},
     requests::{CreateAccountRequest, CreateApiKeyRequest, CreateTransactionRequest, UpdateAccountRequest, UpdateApiKeyRequest},
     responses::{AccountResponse, BalanceResponse, KeyCreatedResponse, KeyInfoResponse, TransactionResponse, UsageResponse},
+    analytics::{AnalyticsResponse, EndpointStats, HourlyVolume, RequestStats, StatusCodeStats, TimeRangeFilter},
 };
 
 #[derive(OpenApi)]
@@ -110,6 +111,11 @@ All errors follow a consistent format:
         // Usage endpoints
         crate::handlers::usage::get_own_usage,
         crate::handlers::usage::get_key_usage,
+
+        // Analytics endpoints
+        crate::handlers::analytics::get_own_analytics,
+        crate::handlers::analytics::get_key_analytics,
+        crate::handlers::analytics::get_system_analytics,
     ),
     components(
         schemas(
@@ -153,6 +159,14 @@ All errors follow a consistent format:
             QuotaUsage,
             QuotaUsageStats,
             QuotaStatus,
+
+            // Analytics schemas
+            AnalyticsResponse,
+            RequestStats,
+            EndpointStats,
+            StatusCodeStats,
+            HourlyVolume,
+            TimeRangeFilter,
         )
     ),
     tags(
@@ -161,6 +175,7 @@ All errors follow a consistent format:
         (name = "transactions", description = "Transaction processing and retrieval"),
         (name = "keys", description = "API key management (Admin only)"),
         (name = "usage", description = "Usage tracking and statistics"),
+        (name = "analytics", description = "Request analytics and statistics"),
     ),
     modifiers(&SecurityAddon)
 )]

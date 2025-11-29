@@ -6,7 +6,6 @@ use axum::{
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::handlers::{accounts, keys, transactions, usage};
 use crate::models::{
     common::{Cursor, ErrorCode, ErrorDetail, ErrorResponse, PaginatedResponse, PaginationParams},
     finance::{Currency, FailureReason, TransactionFilters, TransactionStatus, TransactionType},
@@ -68,7 +67,8 @@ All errors follow a consistent format:
     "details": {}
   }
 }
-```"#,
+```
+"#,
         contact(
             name = "API Support",
             email = "support@financely.com",
@@ -100,18 +100,18 @@ All errors follow a consistent format:
         crate::handlers::transactions::list_transactions,
         crate::handlers::transactions::get_account_transactions,
         crate::handlers::transactions::get_account_balance,
-
+        
         // API Key management endpoints (Admin only)
         crate::handlers::keys::create_api_key,
         crate::handlers::keys::list_api_keys,
         crate::handlers::keys::get_api_key,
         crate::handlers::keys::update_api_key,
         crate::handlers::keys::delete_api_key,
-
+        
         // Usage endpoints
         crate::handlers::usage::get_own_usage,
         crate::handlers::usage::get_key_usage,
-
+        
         // Analytics endpoints
         crate::handlers::analytics::get_own_analytics,
         crate::handlers::analytics::get_key_analytics,
@@ -159,7 +159,7 @@ All errors follow a consistent format:
             QuotaUsage,
             QuotaUsageStats,
             QuotaStatus,
-
+            
             // Analytics schemas
             AnalyticsResponse,
             RequestStats,
@@ -170,16 +170,15 @@ All errors follow a consistent format:
         )
     ),
     tags(
-        (name = "health", description = "Health Check Endpoints"),
         (name = "accounts", description = "Account management operations"),
         (name = "transactions", description = "Transaction processing and retrieval"),
         (name = "keys", description = "API key management (Admin only)"),
-        (name = "usage", description = "Usage tracking and statistics"),
+        (name = "usage", description = "Usage and quota monitoring"),
         (name = "analytics", description = "Request analytics and statistics"),
+        (name = "health", description = "Health check endpoints"),
     ),
     modifiers(&SecurityAddon)
 )]
-
 pub struct ApiDoc;
 
 struct SecurityAddon;

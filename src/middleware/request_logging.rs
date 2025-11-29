@@ -1,9 +1,7 @@
 use axum::{
-    body::Body,
     extract::{Request, State},
-    http::StatusCode,
     middleware::Next,
-    response::{IntoResponse, Response},
+    response::Response,
 };
 use std::sync::Arc;
 use std::time::Instant;
@@ -92,7 +90,7 @@ pub async fn extract_account_context(
 ) -> Response {
     let path = request.uri().path();
     
-    let account_id = if let Some(captures) = extract_account_from_path(path) {
+    let _account_id = if let Some(captures) = extract_account_from_path(path) {
         Some(captures.to_string())
     } else {
         None

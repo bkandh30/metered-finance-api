@@ -4,3 +4,4 @@ pub mod keys;
 pub mod metrics;
 pub mod transactions;
 pub mod usage;
+pub mod analytics;

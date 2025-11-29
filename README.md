@@ -10,8 +10,8 @@
 - [x] Phase 8: Pagination & Filters
 - [x] Phase 9: Rate Limiting & Quotas
 - [x] Phase 10: Core Endpoints & Logic
+- [x] Phase 11: OpenAPI Polish
 
-- [ ] Phase 11: OpenAPI Polish
 - [ ] Phase 12: Request Logging & Usage Metering
 - [ ] Phase 13: Containerization & Deploy
 - [ ] Phase 14: Data Seeding & Demo UX

@@ -42,7 +42,6 @@ async fn main() -> Result<()> {
 
     info!("Server listening on {}", addr);
     info!("Swagger UI available at http://{}/docs", addr);
-    info!("Metrics available at http://{}/metrics", addr);
     info!("Health check available at http://{}/health/live", addr);
     info!("API endpoints available at http://{}/api/*", addr);
 

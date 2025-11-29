@@ -8,7 +8,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tower_http::{cors::CorsLayer, timeout::TimeoutLayer, trace::TraceLayer};
 
-use crate::handlers::{health, metrics, metrics::Metrics};
+use crate::handlers::health;
 use crate::{config::Config, db::PgPool, middleware::request_id::request_id_layers, openapi};
 
 #[derive(Clone)]
@@ -25,9 +25,6 @@ pub async fn build_router(config: Config) -> Result<Router> {
         config: config.clone(),
     });
 
-    let Metrics { router: metrics_router, layer: prom_layer } = metrics::init();
-    let metrics_router = metrics_router.with_state::<Arc<AppState>>(());
-
     let cors = CorsLayer::new()
         .allow_origin("*".parse::<HeaderValue>()?)
         .allow_methods(tower_http::cors::Any)
@@ -40,7 +37,6 @@ pub async fn build_router(config: Config) -> Result<Router> {
 
     let app = Router::new()
         .with_state::<Arc<AppState>>(())
-        .merge(metrics_router)
         .merge(openapi_router)
         .nest("/v1", v1_router)
         .route(
@@ -48,7 +44,6 @@ pub async fn build_router(config: Config) -> Result<Router> {
             get(health::health_live).with_state::<Arc<AppState>>(()),
         )
         .route("/health/ready", get(health::health_ready))
-        .layer(prom_layer)
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(cors)
         .layer(set_xrid)

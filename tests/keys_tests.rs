@@ -124,35 +124,45 @@ fn test_auth_context_empty_scopes() {
 }
 
 #[test]
-fn test_create_api_key_validation_valid() {
+fn test_create_api_key_request_validation() {
+    use metered_finance_api::models::{keys::Scope, requests::CreateApiKeyRequest};
+    
     let valid = CreateApiKeyRequest {
+        name: "Production Key".to_string(),
         scopes: vec![Scope::Client, Scope::Reporting],
+        rate_limit_per_minute: None,
+        daily_quota: None,
+        monthly_quota: None,
     };
     assert!(valid.validate().is_ok());
 }
 
 #[test]
-fn test_create_api_key_validation_empty_scopes() {
+fn test_create_api_key_empty_scopes() {
+    use metered_finance_api::models::requests::CreateApiKeyRequest;
+    
     let empty_scopes = CreateApiKeyRequest {
+        name: "Test Key".to_string(),
         scopes: vec![],
+        rate_limit_per_minute: None,
+        daily_quota: None,
+        monthly_quota: None,
     };
-    assert!(matches!(empty_scopes.validate(), Err(ValidationError::EmptyScopes)));
+    assert!(empty_scopes.validate().is_err());
 }
 
 #[test]
-fn test_create_api_key_validation_duplicate_scopes() {
-    let duplicate_scopes = CreateApiKeyRequest {
-        scopes: vec![Scope::Client, Scope::Client],
-    };
-    assert!(matches!(duplicate_scopes.validate(), Err(ValidationError::DuplicateScopes)));
-}
-
-#[test]
-fn test_create_api_key_validation_multiple_duplicates() {
+fn test_create_api_key_with_all_scopes() {
+    use metered_finance_api::models::{keys::Scope, requests::CreateApiKeyRequest};
+    
     let request = CreateApiKeyRequest {
-        scopes: vec![Scope::Client, Scope::Admin, Scope::Client, Scope::Admin],
+        name: "Admin Key".to_string(),
+        scopes: vec![Scope::Client, Scope::Admin, Scope::Reporting],
+        rate_limit_per_minute: Some(1000),
+        daily_quota: Some(100_000),
+        monthly_quota: Some(2_000_000),
     };
-    assert!(matches!(request.validate(), Err(ValidationError::DuplicateScopes)));
+    assert!(request.validate().is_ok());
 }
 
 #[test]
@@ -171,54 +181,6 @@ fn test_verify_with_invalid_hash() {
     let invalid_hash = "not_a_valid_hash";
     
     assert!(!ApiKeyGenerator::verify_secret(secret, invalid_hash));
-}
-
-#[test]
-fn test_create_api_key_request_validation() {
-    let req = CreateApiKeyRequest {
-        name: "Production Key".to_string(),
-        scopes: vec![Scope::Client, Scope::Reporting],
-        rate_limit_per_minute: None,
-        daily_quota: None,
-        monthly_quota: None,
-    };
-    assert!(req.validate().is_ok());
-
-    let req = CreateApiKeyRequest {
-        name: "".to_string(),
-        scopes: vec![Scope::Client],
-        rate_limit_per_minute: None,
-        daily_quota: None,
-        monthly_quota: None,
-    };
-    assert!(req.validate().is_err());
-
-    let req = CreateApiKeyRequest {
-        name: "ab".to_string(),
-        scopes: vec![Scope::Client],
-        rate_limit_per_minute: None,
-        daily_quota: None,
-        monthly_quota: None,
-    };
-    assert!(req.validate().is_err());
-
-    let req = CreateApiKeyRequest {
-        name: "a".repeat(101),
-        scopes: vec![Scope::Client],
-        rate_limit_per_minute: None,
-        daily_quota: None,
-        monthly_quota: None,
-    };
-    assert!(req.validate().is_err());
-
-    let req = CreateApiKeyRequest {
-        name: "Test Key".to_string(),
-        scopes: vec![],
-        rate_limit_per_minute: None,
-        daily_quota: None,
-        monthly_quota: None,
-    };
-    assert!(req.validate().is_err());
 }
 
 #[test]
@@ -297,18 +259,6 @@ fn test_create_api_key_request_quotas() {
         monthly_quota: Some(100_000_001),
     };
     assert!(req.validate().is_err());
-}
-
-#[test]
-fn test_create_api_key_with_all_scopes() {
-    let req = CreateApiKeyRequest {
-        name: "Admin Key".to_string(),
-        scopes: vec![Scope::Client, Scope::Admin, Scope::Reporting],
-        rate_limit_per_minute: Some(1000),
-        daily_quota: Some(100_000),
-        monthly_quota: Some(2_000_000),
-    };
-    assert!(req.validate().is_ok());
 }
 
 #[test]

@@ -69,13 +69,15 @@ pub struct AnalyticsResponse {
     pub hourly_volume: Option<Vec<HourlyVolume>>,
 }
 
-#[derive(Debug, Clone, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Deserialize, utoipa::IntoParams, ToSchema)]
 pub struct TimeRangeFilter {
     #[serde(default)]
+    #[param(value_type = Option<String>, format = DateTime)]
     #[schema(value_type = Option<String>, format = DateTime)]
     pub start: Option<DateTime<Utc>>,
     
     #[serde(default)]
+    #[param(value_type = Option<String>, format = DateTime)]
     #[schema(value_type = Option<String>, format = DateTime)]
     pub end: Option<DateTime<Utc>>,
 }
@@ -141,7 +143,7 @@ impl AnalyticsService {
             successful_requests: stats.1,
             failed_requests: stats.2,
             avg_latency_ms: stats.3.unwrap_or(0.0),
-            median_latency_ms: None, // TODO: Calculate with percentile_cont
+            median_latency_ms: None,
             p95_latency_ms: None,
             p99_latency_ms: None,
             period_start: start,

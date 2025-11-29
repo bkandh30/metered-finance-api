@@ -9,6 +9,7 @@ use crate::{
     app::AppState,
     middleware::{auth::{AdminAuth, ClientAuth}, errors::AppError},
     models::{
+        common::ErrorResponse,
         analytics::{AnalyticsResponse, AnalyticsService, TimeRangeFilter},
         keys::AuthContext,
     },

@@ -3,6 +3,7 @@ target/
 .gitignore
 .env
 .env.*
+!.env.example
 Dockerfile
 .dockerignore
 README.md

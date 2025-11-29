@@ -25,34 +25,7 @@ services:
       start_period: 10s
     networks:
       - metered-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  # PostgreSQL database (for local development)
-  postgres:
-    image: postgres:15-alpine
-    container_name: metered-finance-db
-    ports:
-      - "5433:5432"
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${POSTGRES_DB:-metered_finance}
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - metered-network
 
 networks:
   metered-network:
     driver: bridge
-
-volumes:
-  postgres-data:

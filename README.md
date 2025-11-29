@@ -11,8 +11,8 @@
 - [x] Phase 9: Rate Limiting & Quotas
 - [x] Phase 10: Core Endpoints & Logic
 - [x] Phase 11: OpenAPI Polish
+- [x] Phase 12: Request Logging & Usage Metering
 
-- [ ] Phase 12: Request Logging & Usage Metering
 - [ ] Phase 13: Containerization & Deploy
 - [ ] Phase 14: Data Seeding & Demo UX
 - [ ] Phase 15: README Content

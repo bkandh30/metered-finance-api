@@ -159,15 +159,14 @@ impl std::fmt::Display for AppError {
         match self {
             AppError::Unauthorized(msg) => write!(f, "Unauthorized: {}", msg),
             AppError::Forbidden(msg) => write!(f, "Forbidden: {}", msg),
-            AppError::InvalidApiKey(msg) => write!(f, "Invalid API key: {}", msg),
+            AppError::InvalidApiKey => write!(f, "Invalid API key"),
             AppError::ValidationError(msg) => write!(f, "Validation error: {}", msg),
             AppError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
-            AppError::NotFound { resource, id } => write!(f, "{} not found: {}", resource, id),
-            AppError::AlreadyExists(msg) => write!(f, "Already exists: {}", msg),
-            AppError::RateLimitExceeded(msg) => write!(f, "Rate limit exceeded: {}", msg),
-            AppError::QuotaExceeded(msg) => write!(f, "Quota exceeded: {}", msg),
+            AppError::NotFound(msg) => write!(f, "Not found: {}", msg),
+            AppError::RateLimitExceeded => write!(f, "Rate limit exceeded"),
+            AppError::QuotaExceeded => write!(f, "Quota exceeded"),
             AppError::InternalError(msg) => write!(f, "Internal error: {}", msg),
-            AppError::DatabaseError(msg) => write!(f, "Database error: {}", msg),
+            AppError::DatabaseError(e) => write!(f, "Database error: {}", e),
         }
     }
 }

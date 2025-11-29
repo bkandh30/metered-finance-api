@@ -85,10 +85,17 @@ All errors follow a consistent format:
     ),
     paths(
         // Account endpoints
-        accounts::create_account,
-        accounts::get_account,
-        accounts::list_accounts,
-        accounts::update_account,
+        crate::handlers::accounts::create_account,
+        crate::handlers::accounts::get_account,
+        crate::handlers::accounts::list_accounts,
+        crate::handlers::accounts::update_account,
+        
+        // Transaction endpoints
+        crate::handlers::transactions::create_transaction,
+        crate::handlers::transactions::get_transaction,
+        crate::handlers::transactions::list_transactions,
+        crate::handlers::transactions::get_account_transactions,
+        crate::handlers::transactions::get_account_balance,
     ),
     components(
         schemas(
@@ -137,6 +144,7 @@ All errors follow a consistent format:
     tags(
         (name = "health", description = "Health Check Endpoints"),
         (name = "accounts", description = "Account management operations"),
+        (name = "transactions", description = "Transaction processing and retrieval"),
     ),
     modifiers(&SecurityAddon)
 )]

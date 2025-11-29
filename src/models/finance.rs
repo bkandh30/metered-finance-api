@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
@@ -192,20 +192,27 @@ pub struct Transaction {
     pub processed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct TransactionFilters {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub account_id: Option<String>,
+    
     #[serde(skip_serializing_if = "Option::is_none")]
     pub status: Option<TransactionStatus>,
+    
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transaction_type: Option<TransactionType>,
+    
     #[serde(skip_serializing_if = "Option::is_none")]
     pub currency: Option<Currency>,
+    
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[param(value_type = Option<String>, format = DateTime)]
     #[schema(value_type = Option<String>, format = DateTime)]
     pub created_after: Option<DateTime<Utc>>,
+    
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[param(value_type = Option<String>, format = DateTime)]
     #[schema(value_type = Option<String>, format = DateTime)]
     pub created_before: Option<DateTime<Utc>>,
 }

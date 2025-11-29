@@ -9,13 +9,33 @@ use crate::{
     app::AppState,
     middleware::{auth::ClientAuth, errors::AppError},
     models::{
-        common::{PaginatedResponse, PaginationParams},
+        common::{ErrorResponse, PaginatedResponse, PaginationParams},
         finance::{TransactionFilters, TransactionStatus},
         requests::CreateTransactionRequest,
         responses::{BalanceResponse, TransactionResponse},
     },
 };
 
+/// Create a new transaction
+///
+/// Creates a new financial transaction for the specified account.
+/// Supports multiple transaction types including payments, refunds, and payouts.
+#[utoipa::path(
+    post,
+    path = "/api/transactions",
+    tag = "transactions",
+    request_body = CreateTransactionRequest,
+    responses(
+        (status = 201, description = "Transaction created successfully", body = TransactionResponse),
+        (status = 400, description = "Invalid input", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn create_transaction(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
@@ -90,6 +110,26 @@ pub async fn create_transaction(
     ))
 }
 
+/// Get transaction details
+///
+/// Retrieves detailed information about a specific transaction by its ID.
+#[utoipa::path(
+    get,
+    path = "/api/transactions/{transaction_id}",
+    tag = "transactions",
+    params(
+        ("transaction_id" = String, Path, description = "Transaction identifier")
+    ),
+    responses(
+        (status = 200, description = "Transaction found", body = TransactionResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Transaction not found", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn get_transaction(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
@@ -135,6 +175,27 @@ pub async fn get_transaction(
     }))
 }
 
+/// List all transactions
+///
+/// Retrieves a paginated and filtered list of transactions.
+/// Supports filtering by account, status, type, currency, and date range.
+#[utoipa::path(
+    get,
+    path = "/api/transactions",
+    tag = "transactions",
+    params(
+        PaginationParams,
+        TransactionFilters
+    ),
+    responses(
+        (status = 200, description = "List of transactions", body = PaginatedResponse<TransactionResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn list_transactions(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
@@ -260,6 +321,27 @@ pub async fn list_transactions(
     }))
 }
 
+/// Get account transactions
+///
+/// Retrieves all transactions for a specific account with pagination support.
+#[utoipa::path(
+    get,
+    path = "/api/accounts/{account_id}/transactions",
+    tag = "transactions",
+    params(
+        ("account_id" = String, Path, description = "Account identifier"),
+        PaginationParams
+    ),
+    responses(
+        (status = 200, description = "List of account transactions", body = PaginatedResponse<TransactionResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn get_account_transactions(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
@@ -289,6 +371,27 @@ pub async fn get_account_transactions(
     .await
 }
 
+/// Get account balance
+///
+/// Retrieves the current balance for a specific account.
+/// The balance is calculated from all completed transactions.
+#[utoipa::path(
+    get,
+    path = "/api/accounts/{account_id}/balance",
+    tag = "transactions",
+    params(
+        ("account_id" = String, Path, description = "Account identifier")
+    ),
+    responses(
+        (status = 200, description = "Account balance", body = BalanceResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn get_account_balance(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,

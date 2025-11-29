@@ -96,6 +96,13 @@ All errors follow a consistent format:
         crate::handlers::transactions::list_transactions,
         crate::handlers::transactions::get_account_transactions,
         crate::handlers::transactions::get_account_balance,
+
+        // API Key management endpoints (Admin only)
+        crate::handlers::keys::create_api_key,
+        crate::handlers::keys::list_api_keys,
+        crate::handlers::keys::get_api_key,
+        crate::handlers::keys::update_api_key,
+        crate::handlers::keys::delete_api_key,
     ),
     components(
         schemas(
@@ -145,6 +152,7 @@ All errors follow a consistent format:
         (name = "health", description = "Health Check Endpoints"),
         (name = "accounts", description = "Account management operations"),
         (name = "transactions", description = "Transaction processing and retrieval"),
+        (name = "keys", description = "API key management (Admin only)"),
     ),
     modifiers(&SecurityAddon)
 )]

@@ -9,13 +9,47 @@ use crate::{
     app::AppState,
     middleware::{auth::AdminAuth, errors::AppError},
     models::{
-        common::{PaginatedResponse, PaginationParams},
+        common::{ErrorResponse, PaginatedResponse, PaginationParams},
         keys::{ApiKeyGenerator, Scope},
         requests::{CreateApiKeyRequest, UpdateApiKeyRequest},
         responses::{KeyCreatedResponse, KeyInfoResponse},
     },
 };
 
+/// Create a new API key
+///
+/// Creates a new API key with specified scopes and rate limits.
+/// This endpoint is only accessible with admin authentication.
+/// 
+/// **Important**: The full API key is only shown once upon creation.
+/// Make sure to save it securely.
+#[utoipa::path(
+    post,
+    path = "/api/admin/keys",
+    tag = "keys",
+    request_body = CreateApiKeyRequest,
+    responses(
+        (status = 201, description = "API key created successfully", body = KeyCreatedResponse,
+            example = json!({
+                "key_id": "key_a1b2c3d4",
+                "api_key": "sk_live_a1b2c3d4_32characterrandomstring",
+                "prefix": "sk_live_a1b2c3d",
+                "name": "Production Key",
+                "scopes": ["client", "reporting"],
+                "active": true,
+                "rate_limit_per_minute": 100,
+                "daily_quota": 10000,
+                "monthly_quota": 300000,
+                "created_at": "2024-01-15T10:30:00Z"
+            })
+        ),
+        (status = 400, description = "Invalid input", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+    ),
+    security(
+        ("AdminKeyAuth" = [])
+    )
+)]
 pub async fn create_api_key(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<AdminAuth>,
@@ -85,6 +119,27 @@ pub async fn create_api_key(
     ))
 }
 
+/// List all API keys
+///
+/// Retrieves a paginated list of all API keys in the system.
+/// This endpoint is only accessible with admin authentication.
+/// 
+/// Note: The actual secret key is never returned, only metadata.
+#[utoipa::path(
+    get,
+    path = "/api/admin/keys",
+    tag = "keys",
+    params(
+        PaginationParams
+    ),
+    responses(
+        (status = 200, description = "List of API keys", body = PaginatedResponse<KeyInfoResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+    ),
+    security(
+        ("AdminKeyAuth" = [])
+    )
+)]
 pub async fn list_api_keys(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<AdminAuth>,
@@ -187,6 +242,26 @@ pub async fn list_api_keys(
     }))
 }
 
+/// Get API key details
+///
+/// Retrieves detailed information about a specific API key by its ID.
+/// This endpoint is only accessible with admin authentication.
+#[utoipa::path(
+    get,
+    path = "/api/admin/keys/{key_id}",
+    tag = "keys",
+    params(
+        ("key_id" = String, Path, description = "API key identifier")
+    ),
+    responses(
+        (status = 200, description = "API key found", body = KeyInfoResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "API key not found", body = ErrorResponse),
+    ),
+    security(
+        ("AdminKeyAuth" = [])
+    )
+)]
 pub async fn get_api_key(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<AdminAuth>,
@@ -232,6 +307,28 @@ pub async fn get_api_key(
     }))
 }
 
+/// Update API key
+///
+/// Updates properties of an existing API key such as active status, scopes, or rate limits.
+/// This endpoint is only accessible with admin authentication.
+#[utoipa::path(
+    patch,
+    path = "/api/admin/keys/{key_id}",
+    tag = "keys",
+    params(
+        ("key_id" = String, Path, description = "API key identifier")
+    ),
+    request_body = UpdateApiKeyRequest,
+    responses(
+        (status = 200, description = "API key updated successfully", body = KeyInfoResponse),
+        (status = 400, description = "Invalid input", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "API key not found", body = ErrorResponse),
+    ),
+    security(
+        ("AdminKeyAuth" = [])
+    )
+)]
 pub async fn update_api_key(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<AdminAuth>,
@@ -350,6 +447,26 @@ pub async fn update_api_key(
     }))
 }
 
+/// Delete API key
+///
+/// Permanently deletes an API key. This action cannot be undone.
+/// This endpoint is only accessible with admin authentication.
+#[utoipa::path(
+    delete,
+    path = "/api/admin/keys/{key_id}",
+    tag = "keys",
+    params(
+        ("key_id" = String, Path, description = "API key identifier")
+    ),
+    responses(
+        (status = 204, description = "API key deleted successfully"),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "API key not found", body = ErrorResponse),
+    ),
+    security(
+        ("AdminKeyAuth" = [])
+    )
+)]
 pub async fn delete_api_key(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<AdminAuth>,

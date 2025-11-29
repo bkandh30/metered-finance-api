@@ -12,8 +12,7 @@
 - [x] Phase 10: Core Endpoints & Logic
 - [x] Phase 11: OpenAPI Polish
 - [x] Phase 12: Request Logging & Usage Metering
-
-- [ ] Phase 13: Containerization & Deploy
+- [x] Phase 13: Containerization & Deploy
 
 - [ ] Phase 14: Data Seeding
 - [ ] Phase 15: README Content

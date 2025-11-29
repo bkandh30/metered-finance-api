@@ -83,6 +83,10 @@ All errors follow a consistent format:
         (url = "https://api.financely.com", description = "Production Server"),
     ),
     paths(
+        // Health check endpoints
+        crate::handlers::health::health_live,
+        crate::handlers::health::health_ready,
+        
         // Account endpoints
         crate::handlers::accounts::create_account,
         crate::handlers::accounts::get_account,

@@ -11,3 +11,12 @@ LICENSE
 .github/
 .idea/
 .vscode/
+.DS_Store
+*.swp
+*.swo
+*~
+coverage/
+*.md
+!CHANGELOG.md
+docker-compose.yml
+prometheus.yml

@@ -14,6 +14,7 @@
 - [x] Phase 12: Request Logging & Usage Metering
 
 - [ ] Phase 13: Containerization & Deploy
-- [ ] Phase 14: Data Seeding & Demo UX
+
+- [ ] Phase 14: Data Seeding
 - [ ] Phase 15: README Content
 - [ ] Phase 16: Final Testing & Verification

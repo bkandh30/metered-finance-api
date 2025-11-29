@@ -21,8 +21,7 @@ use crate::models::{
     info(
         title = "Metered Finance API",
         version = "1.0.0",
-        description = r#"# Metered Finance API
-
+        description = r#"
 A production-ready financial transactions API with built-in metering, rate limiting, and quota management.
 
 ## Features
@@ -103,6 +102,10 @@ All errors follow a consistent format:
         crate::handlers::keys::get_api_key,
         crate::handlers::keys::update_api_key,
         crate::handlers::keys::delete_api_key,
+
+        // Usage endpoints
+        crate::handlers::usage::get_own_usage,
+        crate::handlers::usage::get_key_usage,
     ),
     components(
         schemas(
@@ -153,6 +156,7 @@ All errors follow a consistent format:
         (name = "accounts", description = "Account management operations"),
         (name = "transactions", description = "Transaction processing and retrieval"),
         (name = "keys", description = "API key management (Admin only)"),
+        (name = "usage", description = "Usage tracking and statistics"),
     ),
     modifiers(&SecurityAddon)
 )]

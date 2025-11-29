@@ -1,6 +1,6 @@
 use base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine};
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
+use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Cursor(pub String);
@@ -63,12 +63,13 @@ impl std::fmt::Display for CursorError {
 
 impl std::error::Error for CursorError {}
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, IntoParams, ToSchema)]
 pub struct PaginationParams {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cursor: Option<Cursor>,
     
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[param(minimum = 1, maximum = 100)]
     pub limit: Option<u32>,
 }
 

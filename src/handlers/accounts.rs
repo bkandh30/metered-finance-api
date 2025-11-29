@@ -4,17 +4,38 @@ use axum::{
     Extension, Json,
 };
 use std::sync::Arc;
+use utoipa;
 
 use crate::{
     app::AppState,
     middleware::{auth::ClientAuth, errors::AppError},
     models::{
-        common::{PaginatedResponse, PaginationParams},
+        common::{ErrorResponse, PaginatedResponse, PaginationParams},
         requests::{CreateAccountRequest, UpdateAccountRequest},
         responses::AccountResponse,
     },
 };
 
+/// Create a new account
+///
+/// Creates a new account with the specified account ID and optional metadata.
+/// The account ID must be unique across the system.
+#[utoipa::path(
+    post,
+    path = "/api/accounts",
+    tag = "accounts",
+    request_body = CreateAccountRequest,
+    responses(
+        (status = 201, description = "Account created successfully", body = AccountResponse),
+        (status = 400, description = "Invalid input", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 409, description = "Account already exists", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn create_account(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
@@ -60,6 +81,26 @@ pub async fn create_account(
     ))
 }
 
+/// Get account details
+///
+/// Retrieves detailed information about a specific account by its ID.
+#[utoipa::path(
+    get,
+    path = "/api/accounts/{account_id}",
+    tag = "accounts",
+    params(
+        ("account_id" = String, Path, description = "Account identifier")
+    ),
+    responses(
+        (status = 200, description = "Account found", body = AccountResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn get_account(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
@@ -85,6 +126,25 @@ pub async fn get_account(
     }))
 }
 
+/// List all accounts
+///
+/// Retrieves a paginated list of all accounts. Use the cursor parameter for pagination.
+#[utoipa::path(
+    get,
+    path = "/api/accounts",
+    tag = "accounts",
+    params(
+        PaginationParams
+    ),
+    responses(
+        (status = 200, description = "List of accounts", body = PaginatedResponse<AccountResponse>),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn list_accounts(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,
@@ -153,6 +213,28 @@ pub async fn list_accounts(
     }))
 }
 
+/// Update account metadata
+///
+/// Updates the metadata for an existing account. The metadata can contain any valid JSON.
+#[utoipa::path(
+    patch,
+    path = "/api/accounts/{account_id}",
+    tag = "accounts",
+    params(
+        ("account_id" = String, Path, description = "Account identifier")
+    ),
+    request_body = UpdateAccountRequest,
+    responses(
+        (status = 200, description = "Account updated successfully", body = AccountResponse),
+        (status = 400, description = "Invalid input", body = ErrorResponse),
+        (status = 401, description = "Unauthorized", body = ErrorResponse),
+        (status = 404, description = "Account not found", body = ErrorResponse),
+        (status = 429, description = "Rate limit exceeded", body = ErrorResponse),
+    ),
+    security(
+        ("ApiKeyAuth" = [])
+    )
+)]
 pub async fn update_account(
     State(state): State<Arc<AppState>>,
     Extension(_auth): Extension<ClientAuth>,

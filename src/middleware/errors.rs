@@ -153,3 +153,21 @@ impl AppError {
         AppError::NotFound(format!("Transaction '{}' not found", txn_id))
     }
 }
+
+impl std::fmt::Display for AppError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AppError::Unauthorized(msg) => write!(f, "Unauthorized: {}", msg),
+            AppError::Forbidden(msg) => write!(f, "Forbidden: {}", msg),
+            AppError::InvalidApiKey(msg) => write!(f, "Invalid API key: {}", msg),
+            AppError::ValidationError(msg) => write!(f, "Validation error: {}", msg),
+            AppError::InvalidInput(msg) => write!(f, "Invalid input: {}", msg),
+            AppError::NotFound { resource, id } => write!(f, "{} not found: {}", resource, id),
+            AppError::AlreadyExists(msg) => write!(f, "Already exists: {}", msg),
+            AppError::RateLimitExceeded(msg) => write!(f, "Rate limit exceeded: {}", msg),
+            AppError::QuotaExceeded(msg) => write!(f, "Quota exceeded: {}", msg),
+            AppError::InternalError(msg) => write!(f, "Internal error: {}", msg),
+            AppError::DatabaseError(msg) => write!(f, "Database error: {}", msg),
+        }
+    }
+}

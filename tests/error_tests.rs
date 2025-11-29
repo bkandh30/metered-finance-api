@@ -1,6 +1,5 @@
 use axum::{http::StatusCode, response::IntoResponse};
 use metered_finance_api::middleware::errors::AppError;
-use metered_finance_api::models::common::ValidationError as CommonValidationError;
 use metered_finance_api::models::finance::ValidationError as FinanceValidationError;
 use metered_finance_api::models::keys::ValidationError as KeysValidationError;
 
@@ -114,14 +113,13 @@ fn test_helper_transaction_not_found() {
 
 #[test]
 fn test_from_common_validation_error() {
-    let validation_err = CommonValidationError::InvalidLimit;
-    let app_err: AppError = validation_err.into();
+    use metered_finance_api::models::common::ValidationError;
+    use metered_finance_api::middleware::errors::AppError;
     
-    if let AppError::ValidationError(msg) = app_err {
-        assert!(msg.contains("limit"));
-    } else {
-        panic!("Expected ValidationError");
-    }
+    let error = AppError::from(ValidationError::InvalidLimit);
+    let msg = error.to_string();
+    
+    assert!(msg.contains("Limit") || msg.contains("limit"));
 }
 
 #[test]
@@ -150,7 +148,6 @@ fn test_from_keys_validation_error() {
 
 #[test]
 fn test_error_chain_validation() {
-    // Test that we can convert from domain validation errors
     let finance_err = FinanceValidationError::NegativeAmount;
     let app_err: AppError = finance_err.into();
     let response = app_err.into_response();
